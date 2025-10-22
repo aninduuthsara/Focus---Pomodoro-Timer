@@ -2,7 +2,7 @@
 
   <img src="public/Focus.png" alt="Focus App Logo" width="150" height="150">
 
-  <h1>Focus Timer App</h1>
+  <h1>Focus</h1>
   
   <p>A simple, beautiful, and minimalist focus timer app designed for students and professionals to improve productivity and manage study sessions effectively.</p>
   
