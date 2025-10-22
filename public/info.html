@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - About</title>
+    <link rel="icon" type="image/png" href="Focus-title.png" />
+    <link rel="apple-touch-icon" href="Focus.png" />
+    <meta id="theme-color-meta" name="theme-color" content="rgb(32, 33, 36)" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <script src="src-tauri/tauri.js" defer></script>
+
+    <style>
+        :root {
+            --bg-color-start: #202124;
+            --bg-color-end: #202124;
+            --surface-color: #28292c;
+            --text-primary: #e8eaed;
+            --text-secondary: #9aa0a6;
+            --accent-color: #fabd05;
+            --glow-color: rgba(250, 189, 5, 0.25);
+            --border-color: rgba(255, 255, 255, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.6);
+            --online-color: #34c759;
+            --offline-color: #ff5b53;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            background-color: var(--bg-color-end);
+        }
+
+        body {
+            background: radial-gradient(ellipse at center, var(--bg-color-start), var(--bg-color-end));
+            color: var(--text-primary);
+            font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            cursor: default;
+            opacity: 0;
+            animation: page-fade-in 1s ease-out 0.2s forwards;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        img, svg {
+            pointer-events: none;
+            -webkit-user-drag: none;
+        }
+
+        body::-webkit-scrollbar { width: 10px; }
+        body::-webkit-scrollbar-track { background: var(--bg-color-end); }
+        body::-webkit-scrollbar-thumb {
+            background-color: var(--surface-color);
+            border-radius: 10px;
+            border: 2px solid var(--bg-color-end);
+        }
+
+        @keyframes page-fade-in { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes text-flip-reveal {
+            0% { transform: perspective(800px) rotateX(90deg); opacity: 0; }
+            100% { transform: perspective(800px) rotateX(0deg); opacity: 1; }
+        }
+        @keyframes mouse-pulse {
+            0%, 100% { stroke: var(--text-secondary); }
+            50% { stroke: var(--text-primary); }
+        }
+        @keyframes scroll-line-draw {
+            0% { y2: 12; opacity: 1; }
+            20% { y2: 26; opacity: 1; }
+            80% { y1: 26; y2: 36; opacity: 1; }
+            100% { y1: 36; y2: 36; opacity: 0; }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* MODIFIED: Changed <a> to <button> for JS control */
+        .back-button {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            width: 50px;
+            height: 50px;
+            padding: 0 15px;
+            background-color: var(--surface-color);
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+            border: 1px solid var(--border-color);
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 100;
+            overflow: hidden;
+        }
+        .back-button:hover {
+            width: 160px;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+        .back-button-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            stroke: var(--text-primary);
+            pointer-events: all; /* Allows the SVG inside the button to be clicked */
+            cursor: pointer;
+            margin-right: 0px;
+            padding-right: 3px;
+        }
+        .back-button-text {
+            color: var(--text-primary);
+            white-space: nowrap;
+            margin-left: 12px;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.1s;
+        }
+        .back-button:hover .back-button-text {
+            opacity: 1;
+        }
+        
+        .online-indicator {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            display: flex;
+            align-items: center;
+            background-color: var(--surface-color);
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            z-index: 100;
+        }
+        .online-indicator .status-light {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--online-color);
+            margin-right: 8px;
+            box-shadow: 0 0 8px var(--online-color);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .online-indicator .status-text {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        .online-indicator.offline .status-light {
+            background-color: var(--offline-color);
+            box-shadow: 0 0 8px var(--offline-color);
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+        }
+        .hero-wordmark {
+            display: flex;
+            font-size: clamp(4rem, 20vw, 12rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+        .hero-wordmark span {
+            display: inline-block;
+            opacity: 0;
+            animation: text-flip-reveal 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+            transform-origin: bottom;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-primary);
+            opacity: 0;
+            animation: fadeInUp 1s ease 2.5s forwards;
+        }
+        .mouse {
+            width: 32px;
+            height: 52px;
+            display: block;
+        }
+        .mouse-outline {
+            stroke: var(--text-secondary);
+            animation: mouse-pulse 3s ease-in-out infinite;
+        }
+        .scroll-line {
+            stroke-linecap: round;
+            stroke: var(--accent-color);
+            animation: scroll-line-draw 3s ease-in-out infinite;
+        }
+        .scroll-indicator-text {
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        
+        .content-section {
+            padding: 5rem 0;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .content-section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .content-section .section-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2.5rem;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+        .content-section p {
+            font-size: 1.1rem;
+            line-height: 1.9;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            max-width: 750px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .steps-guide {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .step-card {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            background: var(--surface-color);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .step-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+        .content-section.visible .step-card {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        .content-section.visible .step-card:nth-child(1) { animation-delay: 0.2s; }
+        .content-section.visible .step-card:nth-child(2) { animation-delay: 0.4s; }
+        .content-section.visible .step-card:nth-child(3) { animation-delay: 0.6s; }
+        .step-icon {
+            flex-shrink: 0;
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .step-card:hover .step-icon { border-color: var(--accent-color); }
+        .step-icon svg {
+            width: 28px;
+            height: 28px;
+            stroke: var(--text-secondary);
+            transition: all 0.3s ease;
+        }
+        .step-card:hover .step-icon svg { stroke: var(--accent-color); }
+        .step-content h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .step-content p {
+            font-size: 1rem;
+            text-align: left;
+            margin: 0;
+        }
+        
+        .control-guide {
+            margin-top: 4rem;
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            background: var(--surface-color);
+            opacity: 0;
+        }
+        .content-section.visible .control-guide { animation: fadeInUp 0.6s ease-out 0.8s forwards; }
+        .control-guide h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        .control-guide p { text-align: left; font-size: 1rem; }
+        .control-guide ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 1.5rem;
+        }
+        .control-guide li {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 1rem;
+        }
+        .control-guide li:last-child { border-bottom: none; }
+        .control-guide kbd {
+            background: var(--bg-color-end);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 1rem;
+            font-family: 'Roboto', monospace;
+            color: var(--accent-color);
+            margin-left: 1rem;
+        }
+        
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        .grid-card {
+            background-color: var(--surface-color);
+            padding: 2.5rem;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        .grid-card:hover {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 20px var(--glow-color);
+        }
+        .grid-card h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        .developer-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 2px solid var(--accent-color);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0 0px var(--glow-color);
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.4s ease;
+            pointer-events: auto;
+        }
+        .developer-img:hover {
+            transform: scale(1.1) rotate(3deg);
+            box-shadow: 0 0 15px var(--glow-color);
+            border: 2px solid var(--accent-color);
+        }
+        .developer-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .support-button {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: var(--bg-color-end);
+            padding: 16px 32px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 700;
+            margin-top: 1.5rem;
+            box-shadow: 0 0 20px var(--glow-color);
+            transition: all 0.3s ease;
+        }
+        .support-button:hover {
+            transform: translateY(-5px) scale(1.05);
+        }
+
+        .contact-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        .contact-link:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+            transform: translateY(-3px);
+        }
+        .contact-link svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .site-footer {
+            padding: 3rem 2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 4rem;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .site-footer.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- MODIFIED: Changed <a> to <button> to be controlled by JS -->
+    <a href="index.html" class="back-button" title="Go Back" id="backButton">
+        <svg class="back-button-icon" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke="currentColor"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        <span class="back-button-text">Go Back</span>
+    </a>
+    
+    <div class="online-indicator" title="Status: Online">
+        <div class="status-light"></div>
+        <span class="status-text">Online</span>
+    </div>
+
+    <div class="hero">
+        <h1 class="hero-wordmark"></h1>
+        <div class="scroll-indicator">
+            <svg class="mouse" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 52">
+                <rect class="mouse-outline" x="1" y="1" width="30" height="50" rx="15" fill="none" stroke-width="2" />
+                <line class="scroll-line" x1="16" y1="12" x2="16" y2="22" stroke-width="2" />
+            </svg>
+            <span class="scroll-indicator-text">Scroll to Explore</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <section class="content-section">
+            <h2 class="section-title">ABOUT FOCUS</h2>
+            <p>Focus is a minimalist web project I created to help students improve their study habits through effective time management. It combines a Timer, Stopwatch, and Pomodoro system in a clean, distraction-free interface designed for deep learning.</p>
+        </section>
+
+        <section class="content-section">
+            <h2 class="section-title">HOW IT WORKS</h2>
+            <div class="steps-guide">
+                <div class="step-card">
+                    <div class="step-icon"><svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+                    <div class="step-content"><h3>Timer Mode</h3><p>Set a specific duration for your session. The countdown and subtle audio cues create a rhythm that keeps your mind synchronized and focused.</p></div>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon"><svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 6V3m0 18v-3"></path><path d="M6 12H3m18 0h-3"></path><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-size="7px" font-weight="bold" fill="currentColor" stroke="none">00</text></svg></div>
+                    <div class="step-content"><h3>Stopwatch Mode</h3><p>Measure your study time without a fixed limit. Perfect for open-ended sessions and tracking your total concentration period for the day.</p></div>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon"><svg fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a10 10 0 0 0-3.5 19.3" stroke-dasharray="2 3"></path><text x="50%" y="50%" dominant-baseline="central" text-anchor="middle" font-size="8px" font-weight="bold" fill="currentColor" stroke="none">25</text></svg></div>
+                    <div class="step-content"><h3>Pomodoro Mode</h3><p>Break your work into 25-minute sprints followed by short breaks. This scientifically proven method prevents burnout and trains your brain to focus deeply.</p></div>
+                </div>
+            </div>
+            <div class="control-guide">
+                <h3>Control</h3><p>Interact with the app using these shortcuts for a faster workflow:</p>
+                <ul>
+                    <li>Start or Pause timer<kbd>Spacebar</kbd></li>
+                    <li>Switch between modes<kbd>← / →</kbd></li>
+                    <li>Change Pomodoro rounds (paused)<kbd>↑ / ↓</kbd></li>
+                    <li>Cycle through color themes<kbd>Double-Click</kbd></li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="content-section">
+            <h2 class="section-title">DESIGNED FOR STUDENTS</h2>
+            <p>Focus is built to prevent burnout by dividing large tasks into manageable sessions. The minimal design and calm color themes are crafted to maintain mental clarity, ensuring the app becomes a seamless part of your study habit, not a distraction.</p>
+        </section>
+        
+        <div class="grid-layout">
+            <section class="content-section grid-card">
+                <h2>The Developer</h2>
+                <img src="icons/Developer.png" alt="Anindu Uthsara" class="developer-img">
+                <h3 class="developer-name">Mr. Anindu Uthsara</h3>
+                <p><b>Entry-Level Graphic Designer</b><br><b>Beginner Programmer</b><br><b>17 Years Old</b> Student from <b>Sri Lanka</b><br>Passionate about creativity, technology, and learning new skills.</p>
+                <div class="contact-links">
+                    <a href="https://github.com/aninduuthsara" class="contact-link"><svg viewBox="0 0 24 24"><path d="M12 1.27a11 11 0 00-3.48 21.46c.55.1.73-.24.73-.53v-1.84c-3 .65-3.62-1.45-3.62-1.45-.5-1.27-1.22-1.61-1.22-1.61-1-.68.08-.67.08-.67 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.56 1.2 3.18.92.1-.72.38-1.2.7-1.48-2.42-.27-4.96-1.2-4.96-5.38 0-1.19.42-2.16 1.12-2.92-.1-.28-.48-1.38.12-2.88 0 0 .92-.3 3 1.12a10.4 10.4 0 015.44 0c2.08-1.42 3-1.12 3-1.12.6 1.5.22 2.6.12 2.88.7.76 1.12 1.73 1.12 2.92 0 4.2-2.54 5.1-4.98 5.37.4.34.72.98.72 1.98v2.94c0 .3.18.63.73.53A11 11 0 0012 1.27z"></path></svg><span>GitHub</span></a>
+                    <a href="mailto:aninduuthsara.communexus@gmail.com" class="contact-link"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"></path></svg><span>Email</span></a>
+                </div>
+            </section>
+            
+             <section class="content-section grid-card">
+                 <h2>Support My Journey</h2>
+                 <p>Your kind support helps me continue my education and inspires me to create more meaningful and innovative tools for everyone. Every contribution makes a difference in my learning journey and future growth. Thank you sincerely for being a part of this mission and believing in my dream!</p>
+                 <a href="https://ko-fi.com/creativeliondesign" class="support-button">Support Me - $5</a>
+            </section>
+        </div>
+    </div>
+    
+    <footer class="site-footer">
+        © 2025 Anindu Uthsara. All Rights Reserved.
+    </footer>
+
+    <script>
+        // --- NEW: Tauri Specific Logic at the top for clarity ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // This code runs only if the page is opened inside a Tauri window
+            if (window.__TAURI__) {
+                const { WebviewWindow } = window.__TAURI__.window;
+                const { open } = window.__TAURI__.shell;
+
+                // --- 1. Handle "Go Back" button navigation ---
+                const backButton = document.getElementById('backButton');
+                if (backButton) {
+                    backButton.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const webview = WebviewWindow.getByLabel('main');
+                        if (webview) {
+                            webview.setUrl('index.html');
+                        }
+                    });
+                }
+
+                // --- 2. Handle all external links to open in the default browser ---
+                // We find all <a> tags that have an 'href' starting with 'http'
+                const externalLinks = document.querySelectorAll('a[href^="http"]');
+                externalLinks.forEach(link => {
+                    link.addEventListener('click', (event) => {
+                        // Stop the default action (which is trying to navigate inside the app)
+                        event.preventDefault();
+                        const url = link.getAttribute('href');
+                        // Use the Tauri shell API to open the URL in the user's default browser
+                        if (url) {
+                            open(url);
+                        }
+                    });
+                });
+            }
+
+            // --- Original Animation and UI Logic ---
+            document.addEventListener('contextmenu', event => event.preventDefault());
+
+            const wordmarkContainer = document.querySelector(".hero-wordmark");
+            if(wordmarkContainer) {
+                "FOCUS".split('').forEach((char, index) => {
+                    const span = document.createElement('span');
+                    span.textContent = char;
+                    span.style.animationDelay = `${1 + index * 0.15}s`;
+                    wordmarkContainer.appendChild(span);
+                });
+            }
+            
+            const onlineIndicator = document.querySelector('.online-indicator');
+            const statusText = onlineIndicator.querySelector('.status-text');
+            function updateOnlineStatus() {
+                if (navigator.onLine) {
+                    onlineIndicator.classList.remove('offline');
+                    onlineIndicator.title = "Status: Online";
+                    statusText.textContent = "Online";
+} else {
+                    onlineIndicator.classList.add('offline');
+                    onlineIndicator.title = "Status: Offline";
+                    statusText.textContent = "Offline";
+                }
+            }
+            updateOnlineStatus();
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+
+            let isAutoScrolling = true;
+            let animationFrameId;
+            function stopAutoScroll() {
+                isAutoScrolling = false;
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                window.removeEventListener('wheel', stopAutoScroll, { capture: true });
+                window.removeEventListener('touchstart', stopAutoScroll, { capture: true });
+                window.removeEventListener('keydown', stopAutoScroll, { capture: true });
+            }
+            function slowScrollToEnd() {
+                if (!isAutoScrolling) return;
+                const distanceToEnd = document.documentElement.scrollHeight - window.innerHeight - window.scrollY;
+                if (distanceToEnd <= 1) {
+                    stopAutoScroll();
+                    return;
+                }
+                window.scrollBy(0, 2);
+                animationFrameId = requestAnimationFrame(slowScrollToEnd);
+            }
+            setTimeout(() => {
+                if (!isAutoScrolling) return;
+                const firstSection = document.querySelector('.container');
+                if (firstSection) firstSection.scrollIntoView({ behavior: 'smooth' });
+                setTimeout(() => {
+                    if (isAutoScrolling) animationFrameId = requestAnimationFrame(slowScrollToEnd);
+                }, 830);
+            }, 3400);
+            window.addEventListener('wheel', stopAutoScroll, { capture: true, once: true });
+            window.addEventListener('touchstart', stopAutoScroll, { capture: true, once: true });
+            window.addEventListener('keydown', stopAutoScroll, { capture: true, once: true });
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            document.querySelectorAll('.content-section, .site-footer').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+
+</html>

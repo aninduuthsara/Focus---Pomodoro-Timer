@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1e2021">
+
+    <title>Focus</title>
+
+    <link rel="icon" type="image/png" href="Focus-title.png" />
+    <link rel="apple-touch-icon" href="Focus.png" />
+    <meta id="theme-color-meta" name="theme-color" content="#202124" />
+
+    <script src="src-tauri/tauri.js" defer></script>
+
+    <style>
+        /* --- Loading Screen Styles --- */
+        #loading-screen {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: #1e2021;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 1s ease-out;
+            pointer-events: auto;
+            cursor: pointer;
+        }
+
+        #loading-gif {
+            width: 300px;
+            height: 300px;
+            pointer-events: none;
+            -webkit-user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .app-container {
+            transition: opacity 1s ease-in;
+        }
+
+        /* --- Original App Styles --- */
+        :root {
+            /* Light Mode */
+            --bg-color: #fef3e0;
+            --text-color: #3c4043;
+            --secondary-text-color: #5f6368;
+            --main-btn-bg: #f0c36d;
+            --main-btn-text: #202124;
+            --secondary-btn-bg: #f1f3f4;
+            --secondary-btn-hover: #e8eaed;
+            --tab-active-bg: #fee9b7;
+            --main-btn-disabled-bg: #e8eaed;
+            --tab-active-border: #f0c36d;
+            --circle-bg: rgba(0, 0, 0, 0.08);
+            --progress-color: #FBC02D;
+            --add-time-hover-bg: #fef4d2;
+            --round-change-bg: #e6f4ea;
+            --round-change-circle: #4caf50;
+            /* Running State (Light) */
+            --running-bg-color: #e8f0fe;
+            --running-main-btn-bg: #1a73e8;
+            --running-main-btn-text: #fff;
+            --running-tab-active-bg: #cce0ff;
+            --running-tab-active-border: #8ab4f8;
+            --running-circle-bg: rgba(0, 0, 0, 0.2);
+            --running-progress-color: #4285F4;
+            /* Warning State (Light) */
+            --warning-bg-color: #fbe9e7;
+            --warning-main-btn-bg: #ff7043;
+            --warning-main-btn-text: #fff;
+            --warning-tab-active-bg: #ffccbc;
+            --warning-tab-active-border: #ff8a65;
+            --warning-circle-bg: rgba(0, 0, 0, 0.08);
+            --warning-progress-color: #ff8a65;
+        }
+
+        body.dark-mode {
+            /* Dark Mode */
+            --bg-color: #202124;
+            --text-color: #e8eaed;
+            --secondary-text-color: #9aa0a6;
+            --main-btn-bg: #fabd05;
+            --main-btn-text: #202124;
+            --secondary-btn-bg: #3c4043;
+            --secondary-btn-hover: #5f6368;
+            --tab-active-bg: #3c4043;
+            --tab-active-border: #fabd05;
+            --main-btn-disabled-bg: #3c4043;
+            --circle-bg: rgba(255, 255, 255, 0.1);
+            --progress-color: #fabd05;
+            --add-time-hover-bg: var(--secondary-btn-hover);
+            --round-change-bg: #1a2c21;
+            --round-change-circle: #66bb6a;
+            /* Running State (Dark) */
+            --running-bg-color: #1a2235;
+            --running-main-btn-bg: #8ab4f8;
+            --running-main-btn-text: #202124;
+            --running-tab-active-bg: #28355a;
+            --running-tab-active-border: #8ab4f8;
+            --running-progress-color: #8ab4f8;
+            /* Warning State (Dark) */
+            --warning-bg-color: #3c2a29;
+            --warning-main-btn-bg: #ff8a65;
+            --warning-main-btn-text: #202124;
+            --warning-tab-active-bg: #5f423d;
+            --warning-tab-active-border: #ff8a65;
+            --warning-progress-color: #ff8a65;
+        }
+
+        body.oled-mode {
+            /* OLED Mode */
+            --bg-color: #000000;
+            --text-color: #ffffff;
+            --secondary-text-color: #b0b0b0;
+            --main-btn-bg: #eeeeee;
+            --main-btn-text: #000000;
+            --secondary-btn-bg: #222222;
+            --secondary-btn-hover: #333333;
+            --tab-active-bg: #222222;
+            --main-btn-disabled-bg: #222222;
+            --tab-active-border: #eeeeee;
+            --circle-bg: rgba(255, 255, 255, 0.15);
+            --progress-color: #ffffff;
+            --add-time-hover-bg: var(--secondary-btn-hover);
+            --round-change-bg: #001f00;
+            --round-change-circle: #b2fab4;
+            /* Running State (OLED) */
+            --running-bg-color: #000000;
+            --running-main-btn-bg: #ffffff;
+            --running-main-btn-text: #000000;
+            --running-tab-active-bg: #222222;
+            --running-tab-active-border: #ffffff;
+            --running-circle-bg: rgba(255, 255, 255, 0.2);
+            --running-progress-color: #ffffff;
+            /* Warning State (OLED) */
+            --warning-bg-color: #000000;
+            --warning-main-btn-bg: #ffffff;
+            --warning-main-btn-text: #000000;
+            --warning-tab-active-bg: #222222;
+            --warning-tab-active-border: #ffffff;
+            --warning-circle-bg: rgba(255, 255, 255, 0.15);
+            --warning-progress-color: #ffffff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color .4s ease, color .4s ease;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .app-container {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .tabs {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+        }
+
+        .tab-btn {
+            padding: .6rem 1.2rem;
+            border: 1px solid transparent;
+            border-radius: 25px;
+            font-size: .9rem;
+            font-weight: 500;
+            cursor: pointer;
+            background: transparent;
+            color: var(--secondary-text-color);
+            transition: all .2s ease;
+        }
+
+        .tab-btn.active {
+            background-color: var(--tab-active-bg);
+            border-color: var(--tab-active-border);
+            color: var(--text-color);
+        }
+
+        #infoBtn {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .header:hover #infoBtn {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        body.running-active .tab-btn.active {
+            background-color: var(--running-tab-active-bg);
+            border-color: var(--running-tab-active-border);
+        }
+
+        body.warning-active .tab-btn.active {
+            background-color: var(--warning-tab-active-bg);
+            border-color: var(--warning-tab-active-border);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+        }
+
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-text-color);
+            transition: background-color .2s;
+        }
+
+        .icon-btn:hover {
+            background-color: rgba(245, 222, 179, 0);
+        }
+
+        .icon-btn .icon {
+            stroke: currentColor;
+            width: 20px;
+            height: 20px;
+        }
+
+        .main-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            overflow: hidden;
+        }
+
+        #views-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .view {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .view.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .view.view-out {
+            animation: fade-out-only 0.3s ease-in forwards;
+        }
+
+        .view.view-in {
+            animation: fade-in-only 0.3s ease-out 0.3s forwards;
+        }
+
+        .timer-circle-container {
+            position: relative;
+            width: 380px;
+            height: 380px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform .4s cubic-bezier(.25, 1, .5, 1);
+        }
+
+        body.running-active .timer-circle-container {
+            transform: scale(1.15);
+        }
+
+        .pomodoro-display-wrapper,
+        .timer-display {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+        }
+
+        .pomodoro-status,
+        .pomodoro-round {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--secondary-text-color);
+        }
+
+        .pomodoro-status {
+            margin-bottom: .5rem;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .pomodoro-round {
+            position: relative;
+            top: 0;
+            left: 0;
+            margin-top: 1rem;
+        }
+
+        .time-value {
+            font-size: 5.5rem;
+            font-weight: 400;
+            letter-spacing: .02em;
+            color: var(--text-color);
+            transition: font-size .4s ease-in-out, opacity 0.3s ease-in-out;
+        }
+
+        #stopwatchView .time-value {
+            font-size: 7rem;
+        }
+
+        body.warning-active .time-value {
+            animation: heartbeat 1s ease-in-out infinite;
+        }
+
+        .progress-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring__circle {
+            stroke-width: 16px;
+            fill: transparent;
+            stroke-linecap: round;
+        }
+
+        .progress-ring__background {
+            stroke: var(--circle-bg);
+        }
+
+        .progress-ring__progress {
+            stroke: var(--progress-color);
+            transition: stroke-dashoffset 1s linear, stroke 0.5s ease-in-out;
+        }
+
+        body.running-active .progress-ring__background { stroke: var(--running-circle-bg); }
+        body.running-active .progress-ring__progress { stroke: var(--running-progress-color); }
+        body.warning-active .progress-ring__progress { stroke: var(--warning-progress-color); }
+        body.running-active { background-color: var(--running-bg-color); }
+        body.warning-active { background-color: var(--warning-bg-color); }
+
+        .time-add-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .add-time-btn {
+            height: 36px;
+            padding: 0 16px;
+            border: 1px solid var(--secondary-btn-hover);
+            border-radius: 18px;
+            font-size: .9rem;
+            font-weight: 500;
+            background: transparent;
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all .2s ease;
+        }
+
+        .add-time-btn:hover {
+            background-color: var(--add-time-hover-bg);
+            transform: translateY(-2px);
+        }
+
+        .add-time-btn:active {
+            transform: translateY(0) scale(.98);
+        }
+
+        .control-buttons-wrapper {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 0 2rem 2.5rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            transition: transform .4s cubic-bezier(.25, 1, .5, 1), opacity .3s ease-in-out;
+        }
+
+        body.running-active .control-buttons-wrapper .control-buttons {
+            transform: scale(.85);
+            opacity: 0;
+        }
+
+        body.running-active .control-buttons-wrapper:hover .control-buttons {
+            opacity: 1;
+        }
+
+        .main-btn,
+        .secondary-btn {
+            border-radius: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: all .2s ease;
+        }
+
+        .main-btn {
+            height: 56px;
+            padding: 0 24px;
+            background-color: var(--main-btn-bg);
+        }
+
+        .secondary-btn {
+            height: 56px;
+            width: 56px;
+            background-color: var(--secondary-btn-bg);
+            color: var(--text-color);
+        }
+
+        body.running-active .main-btn { background-color: var(--running-main-btn-bg); }
+        body.warning-active .main-btn { background-color: var(--warning-main-btn-bg); }
+        .main-btn:disabled {
+            background-color: var(--main-btn-disabled-bg);
+            cursor: not-allowed;
+        }
+
+        .main-btn:not(:disabled):hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .1);
+        }
+
+        .main-btn:not(:disabled):active {
+            transform: translateY(0) scale(.98);
+            box-shadow: none;
+        }
+
+        .secondary-btn:hover {
+            background-color: var(--secondary-btn-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, .08);
+        }
+
+        .secondary-btn:active {
+            transform: translateY(0) scale(.98);
+            box-shadow: none;
+        }
+
+        .main-btn .icon {
+            fill: var(--main-btn-text);
+            width: 24px;
+            height: 24px;
+            transition: fill .2s;
+        }
+
+        body.running-active .main-btn .icon { fill: var(--running-main-btn-text); }
+        body.warning-active .main-btn .icon { fill: var(--warning-main-btn-text); }
+        .main-btn:disabled .icon { fill: var(--secondary-text-color); }
+        .secondary-btn .icon {
+            fill: currentColor;
+            width: 24px;
+            height: 24px;
+        }
+
+        /* Round Change Animation Styles */
+        body.is-round-changing-pre,
+        body.is-round-changing-post {
+            transition: background-color 0.5s ease-in-out;
+        }
+
+        body.is-round-changing-pre { background-color: var(--round-change-bg); }
+        body.is-round-changing-pre #pomodoroProgress { stroke: var(--round-change-circle); }
+        body.is-round-changing-post { background-color: var(--running-bg-color); }
+        body.is-round-changing-post #pomodoroProgress { stroke: var(--running-progress-color); }
+
+        body.is-round-changing .header,
+        body.is-round-changing .control-buttons-wrapper,
+        body.is-round-changing .pomodoro-status,
+        body.is-round-changing .time-value {
+            animation: hide-ui 3s ease-in-out forwards;
+        }
+
+        body.is-round-changing .pomodoro-round {
+            animation: zoom-round-text 3s cubic-bezier(.45, 0, .55, 1);
+        }
+
+        body.is-round-changing #pomodoroProgress {
+            animation: circle-fill-green 3s ease-in-out;
+        }
+
+        @keyframes hide-ui {
+            0%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0; }
+        }
+
+        @keyframes zoom-round-text {
+            0% { transform: translateY(0) scale(1); color: var(--secondary-text-color); }
+            25% { transform: translateY(-90px) scale(2.5); color: var(--round-change-circle); }
+            75% { transform: translateY(-90px) scale(2.5); color: var(--round-change-circle); }
+            100% { transform: translateY(0) scale(1); color: var(--secondary-text-color); }
+        }
+
+        @keyframes circle-fill-green {
+            0%, 25% { stroke-dashoffset: 1131; }
+            50% { stroke-dashoffset: 0; }
+            75%, 100% { stroke-dashoffset: 1131; }
+        }
+
+        /* Sequential Fade Animation */
+        @keyframes fade-out-only { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes fade-in-only { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+
+<body class="dark-mode">
+    <div id="loading-screen">
+        <img id="loading-gif" src="icons/Focus.gif" alt="Loading..." />
+    </div>
+
+    <div class="app-container" style="opacity: 0;">
+        <header class="header">
+            <div class="tabs">
+                <button class="tab-btn active" id="timerTab">Timer</button>
+                <button class="tab-btn" id="stopwatchTab">Stopwatch</button>
+                <button class="tab-btn" id="pomodoroTab">Pomodoro</button>
+            </div>
+
+            <div class="header-controls">
+                <!-- MODIFIED: Changed <a> to <button> for JS control -->
+                <a href="info.html" class="icon-btn" id="infoBtn" title="Information">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12" y2="8"></line>
+            </svg>
+        </a>
+                <button class="icon-btn" id="fullscreenBtn" title="Toggle Fullscreen">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div id="views-container">
+                <div id="timerView" class="view active">
+                    <div class="timer-circle-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring__circle progress-ring__background" r="180" cx="190" cy="190"></circle>
+                            <circle id="timerProgress" class="progress-ring__circle progress-ring__progress" r="180" cx="190" cy="190"></circle>
+                        </svg>
+                        <div class="timer-display">
+                            <div class="time-value" id="timerDisplay">00:00</div>
+                            <div class="time-add-buttons">
+                                <button class="add-time-btn" onclick="app.actions.addTime(30)">+00:30</button>
+                                <button class="add-time-btn" onclick="app.actions.addTime(300)">+05:00</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="stopwatchView" class="view">
+                    <div class="timer-circle-container">
+                        <div class="timer-display">
+                            <div class="time-value" id="stopwatchDisplay">0:00<span style="font-size:3.5rem;">.00</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="pomodoroView" class="view">
+                    <div class="timer-circle-container">
+                        <svg class="progress-ring">
+                            <circle class="progress-ring__circle progress-ring__background" r="180" cx="190" cy="190"></circle>
+                            <circle id="pomodoroProgress" class="progress-ring__circle progress-ring__progress" r="180" cx="190" cy="190"></circle>
+                        </svg>
+                        <div class="pomodoro-display-wrapper">
+                            <p id="pomodoroStatus" class="pomodoro-status">Time to Focus</p>
+                            <div class="time-value" id="pomodoroDisplay">25:00</div>
+                            <p id="pomodoroRound" class="pomodoro-round">Round 1</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="control-buttons-wrapper">
+            <div class="control-buttons">
+                <!-- Controls populated by JS -->
+            </div>
+        </footer>
+    </div>
+
+    <audio id="tickSound" src="tick.mp3" preload="auto"></audio>
+    <audio id="roundSound" src="Round.mp3" preload="auto"></audio>
+
+    <script>
+        const app = {
+            state: {
+                currentView: 'timer',
+                isAnimating: false,
+                timer: {
+                    seconds: 0,
+                    totalSeconds: 0,
+                    isRunning: false,
+                    interval: null
+                },
+                stopwatch: {
+                    centiseconds: 0,
+                    isRunning: false,
+                    interval: null
+                },
+                pomodoro: {
+                    state: 'focus',
+                    round: 1,
+                    seconds: 1500,
+                    totalSeconds: 1500,
+                    isRunning: false,
+                    interval: null
+                }
+            },
+            dom: {
+                body: document.body
+            },
+            isScrolling: false,
+            pomodoroResetClickCount: 0,
+
+            init() {
+                // --- START: Loading Screen Logic ---
+                const loadingScreen = document.getElementById('loading-screen');
+                const loadingGif = document.getElementById('loading-gif');
+                const appContainer = document.querySelector('.app-container');
+                let loadingTimeout;
+                const hideLoadingScreen = () => {
+                    if (loadingScreen.classList.contains('hidden')) return;
+                    loadingScreen.classList.add('hidden');
+                    appContainer.style.opacity = '1';
+                    clearTimeout(loadingTimeout);
+                    setTimeout(() => {
+                        loadingScreen.style.display = 'none';
+                    }, 1000);
+                };
+                const originalGifSrc = loadingGif.src;
+                loadingGif.src = '';
+                loadingGif.src = originalGifSrc;
+                loadingGif.addEventListener('contextmenu', (e) => e.preventDefault());
+                loadingTimeout = setTimeout(hideLoadingScreen, 5400);
+                loadingScreen.addEventListener('click', hideLoadingScreen);
+                // --- END: Loading Screen Logic ---
+
+                this.renderAll();
+                this.attachEventListeners();
+                this.updateUI();
+            },
+
+            updateThemeAndTitleBar() {
+                const styles = getComputedStyle(this.dom.body);
+                let color = styles.getPropertyValue('--bg-color').trim();
+
+                if (this.dom.body.classList.contains('is-round-changing-pre') || this.dom.body.classList.contains('is-round-changing')) {
+                    color = styles.getPropertyValue('--round-change-bg').trim();
+                } else if (this.dom.body.classList.contains('is-round-changing-post')) {
+                    color = styles.getPropertyValue('--running-bg-color').trim();
+                } else if (this.dom.body.classList.contains('running-active')) {
+                    color = styles.getPropertyValue('--running-bg-color').trim();
+                } else if (this.dom.body.classList.contains('warning-active')) {
+                    color = styles.getPropertyValue('--warning-bg-color').trim();
+                }
+
+                document.querySelector('meta[name="theme-color"]').setAttribute('content', color);
+                this.dom.themeMeta.setAttribute('content', color);
+            },
+
+            renderAll() {
+                document.querySelector('.control-buttons').innerHTML = `
+                    <div id="timerControls" style="display: flex; gap: 1rem; align-items: center;">
+                        <button class="main-btn" id="playPauseBtn"><svg class="icon" id="playPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></button>
+                        <button class="secondary-btn" id="resetBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"></path></svg></button>
+                    </div>
+                    <div id="stopwatchControls" style="display:none; gap: 1rem; align-items: center;">
+                        <button class="main-btn" id="stopwatchPlayPauseBtn"><svg class="icon" id="stopwatchPlayPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></button>
+                        <button class="secondary-btn" id="stopwatchResetBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"></path></svg></button>
+                    </div>
+                    <div id="pomodoroControls" style="display:none; gap: 1rem; align-items: center;">
+                        <button class="main-btn" id="pomodoroPlayPauseBtn"><svg class="icon" id="pomodoroPlayPauseIcon" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg></button>
+                        <button class="secondary-btn" id="pomodoroResetBtn"><svg class="icon" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"></path></svg></button>
+                    </div>
+                `;
+            },
+
+            attachEventListeners() {
+                Object.assign(this.dom, {
+                    tabs: {
+                        timer: document.getElementById('timerTab'),
+                        stopwatch: document.getElementById('stopwatchTab'),
+                        pomodoro: document.getElementById('pomodoroTab')
+                    },
+                    views: {
+                        timer: document.getElementById('timerView'),
+                        stopwatch: document.getElementById('stopwatchView'),
+                        pomodoro: document.getElementById('pomodoroView')
+                    },
+                    progress: {
+                        timer: document.getElementById('timerProgress'),
+                        pomodoro: document.getElementById('pomodoroProgress')
+                    },
+                    fullscreenBtn: document.getElementById('fullscreenBtn'),
+                    timerControls: document.getElementById('timerControls'),
+                    stopwatchControls: document.getElementById('stopwatchControls'),
+                    pomodoroControls: document.getElementById('pomodoroControls'),
+                    timerDisplay: document.getElementById('timerDisplay'),
+                    timeAddButtons: document.querySelector('#timerView .time-add-buttons'),
+                    playPauseBtn: document.getElementById('playPauseBtn'),
+                    playPauseIcon: document.getElementById('playPauseIcon'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    stopwatchDisplay: document.getElementById('stopwatchDisplay'),
+                    stopwatchPlayPauseBtn: document.getElementById('stopwatchPlayPauseBtn'),
+                    stopwatchPlayPauseIcon: document.getElementById('stopwatchPlayPauseIcon'),
+                    stopwatchResetBtn: document.getElementById('stopwatchResetBtn'),
+                    pomodoroDisplay: document.getElementById('pomodoroDisplay'),
+                    pomodoroStatus: document.getElementById('pomodoroStatus'),
+                    pomodoroRound: document.getElementById('pomodoroRound'),
+                    pomodoroPlayPauseBtn: document.getElementById('pomodoroPlayPauseBtn'),
+                    pomodoroPlayPauseIcon: document.getElementById('pomodoroPlayPauseIcon'),
+                    pomodoroResetBtn: document.getElementById('pomodoroResetBtn'),
+                    themeMeta: document.getElementById('theme-color-meta'),
+                    tickSound: document.getElementById('tickSound'),
+                    roundSound: document.getElementById('roundSound'),
+                    // --- MODIFIED: Added infoBtn to the DOM object ---
+                    infoBtn: document.getElementById('infoBtn')
+                });
+
+                Object.values(this.dom.progress).forEach(circle => {
+                    const radius = circle.r.baseVal.value;
+                    const circumference = 2 * Math.PI * radius;
+                    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                    circle.dataset.circumference = circumference;
+                });
+
+                this.dom.body.addEventListener('dblclick', (e) => {
+                    if (this.state.isAnimating) return;
+                    if (this.dom.body.classList.contains('dark-mode')) {
+                        this.dom.body.classList.remove('dark-mode');
+                    } else if (this.dom.body.classList.contains('oled-mode')) {
+                        this.dom.body.classList.remove('oled-mode');
+                        this.dom.body.classList.add('dark-mode');
+                    } else {
+                        this.dom.body.classList.add('oled-mode');
+                    }
+                    this.updateThemeAndTitleBar();
+                });
+
+                this.dom.fullscreenBtn.addEventListener('click', () => this.actions.toggleFullscreen());
+                Object.values(this.dom.tabs).forEach((tab) => tab.addEventListener('click', () => this.actions.switchView(tab.id.replace('Tab', ''))));
+                this.dom.playPauseBtn.addEventListener('click', () => this.actions.toggleTimer());
+                this.dom.resetBtn.addEventListener('click', () => this.actions.resetTimer());
+                this.dom.stopwatchPlayPauseBtn.addEventListener('click', () => this.actions.toggleStopwatch());
+                this.dom.stopwatchResetBtn.addEventListener('click', () => this.actions.resetStopwatch());
+                this.dom.pomodoroPlayPauseBtn.addEventListener('click', () => this.actions.togglePomodoro());
+                this.dom.pomodoroResetBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.pomodoroResetClickCount++;
+                    setTimeout(() => {
+                        if (this.pomodoroResetClickCount === 1) {
+                            this.actions.resetPomodoro();
+                        } else if (this.pomodoroResetClickCount >= 2) {
+                            this.actions.fullResetPomodoro();
+                        }
+                        this.pomodoroResetClickCount = 0;
+                    }, 300);
+                });
+                this.dom.pomodoroResetBtn.addEventListener('dblclick', (e) => e.stopPropagation());
+
+                window.addEventListener('keydown', (event) => {
+                    if (this.state.isAnimating) return;
+                    if (event.code === 'Space') {
+                        event.preventDefault();
+                        switch (this.state.currentView) {
+                            case 'timer': this.actions.toggleTimer(); break;
+                            case 'stopwatch': this.actions.toggleStopwatch(); break;
+                            case 'pomodoro': this.actions.togglePomodoro(); break;
+                        }
+                    } else if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+                        event.preventDefault();
+                        const direction = event.key === 'ArrowRight' ? 1 : -1;
+                        this.actions.navigateViews(direction);
+                    }
+                    if (this.state.currentView === 'pomodoro' && !this.state.pomodoro.isRunning) {
+                        if (event.key === 'ArrowUp') {
+                            event.preventDefault();
+                            this.actions.changePomodoroRound(1);
+                        } else if (event.key === 'ArrowDown') {
+                            event.preventDefault();
+                            this.actions.changePomodoroRound(-1);
+                        }
+                    }
+                });
+
+                window.addEventListener('wheel', (event) => {
+                    if (this.isScrolling || this.state.isAnimating) return;
+                    this.isScrolling = true;
+                    const direction = event.deltaY > 0 ? 1 : -1;
+                    this.actions.navigateViews(direction);
+                    setTimeout(() => {
+                        this.isScrolling = false;
+                    }, 600);
+                }, {
+                    passive: true
+                });
+
+                // --- MODIFIED: Added infoBtn navigation logic INSIDE the app object ---
+                if (window.__TAURI__ && this.dom.infoBtn) {
+                    const { WebviewWindow } = window.__TAURI__.window;
+                    this.dom.infoBtn.addEventListener('click', () => {
+                        const webview = WebviewWindow.getByLabel('main');
+                        if (webview) {
+                            webview.setUrl('info.html');
+                        }
+                    });
+                }
+            },
+
+            updateUI() {
+                const dom = this.dom, state = this.state,
+                    playIconSVG = '<path d="M8 5v14l11-7z"></path>',
+                    pauseIconSVG = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>';
+                const formatTime = s => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`,
+                    formatStopwatch = cs => `${Math.floor(cs / 6000)}:${(Math.floor(cs / 100) % 60).toString().padStart(2, '0')}<span style="font-size:3.5rem;">.${(cs % 100).toString().padStart(2, '0')}</span>`;
+
+                Object.values(dom.tabs).forEach(tab => tab.classList.remove('active'));
+                dom.tabs[state.currentView].classList.add('active');
+                dom.timerControls.style.display = state.currentView === 'timer' ? 'flex' : 'none';
+                dom.stopwatchControls.style.display = state.currentView === 'stopwatch' ? 'flex' : 'none';
+                dom.pomodoroControls.style.display = state.currentView === 'pomodoro' ? 'flex' : 'none';
+                dom.timerDisplay.textContent = formatTime(state.timer.seconds);
+                dom.playPauseBtn.disabled = state.timer.seconds <= 0;
+                dom.playPauseIcon.innerHTML = state.timer.isRunning ? pauseIconSVG : playIconSVG;
+                const timerPercent = state.timer.totalSeconds > 0 ? ((state.timer.totalSeconds - state.timer.seconds) / state.timer.totalSeconds) * 100 : 0;
+                this.setProgress('timer', timerPercent);
+                dom.stopwatchDisplay.innerHTML = formatStopwatch(state.stopwatch.centiseconds);
+                dom.stopwatchPlayPauseIcon.innerHTML = state.stopwatch.isRunning ? pauseIconSVG : playIconSVG;
+                dom.pomodoroDisplay.textContent = formatTime(state.pomodoro.seconds);
+                dom.pomodoroPlayPauseIcon.innerHTML = state.pomodoro.isRunning ? pauseIconSVG : playIconSVG;
+                dom.pomodoroStatus.textContent = state.pomodoro.state === 'focus' ? 'Time to Focus' : 'Time for a Break';
+                dom.pomodoroRound.textContent = `Round ${state.pomodoro.round}`;
+                const pomodoroPercent = state.pomodoro.totalSeconds > 0 ? ((state.pomodoro.totalSeconds - state.pomodoro.seconds) / state.pomodoro.totalSeconds) * 100 : 0;
+                this.setProgress('pomodoro', pomodoroPercent);
+                const isRunning = state[state.currentView] ? state[state.currentView].isRunning : false;
+                dom.body.classList.toggle('running-active', isRunning);
+                const isWarning = (state.currentView === 'timer' && state.timer.seconds <= 5 && state.timer.seconds > 0) || (state.currentView === 'pomodoro' && state.pomodoro.state === 'break');
+                dom.body.classList.toggle('warning-active', isWarning);
+                this.updateThemeAndTitleBar();
+            },
+
+            setProgress(viewPrefix, percent) {
+                const circle = app.dom.progress[viewPrefix];
+                if (!circle) return;
+                const circumference = circle.dataset.circumference;
+                const offset = circumference - ((percent / 100) * circumference);
+                circle.style.strokeDashoffset = offset;
+            },
+
+            actions: {
+                navigateViews(direction) {
+                    const viewOrder = ['timer', 'stopwatch', 'pomodoro'];
+                    let nextIndex = (viewOrder.indexOf(app.state.currentView) + direction + viewOrder.length) % viewOrder.length;
+                    app.actions.switchView(viewOrder[nextIndex]);
+                },
+                switchView(nextViewName) {
+                    const currentViewName = app.state.currentView;
+                    if (app.state.isAnimating || nextViewName === currentViewName) return;
+                    app.state.isAnimating = true;
+                    app.state.currentView = nextViewName;
+                    app.updateUI();
+                    const currentView = app.dom.views[currentViewName];
+                    const nextView = app.dom.views[nextViewName];
+                    currentView.classList.add('view-out');
+                    setTimeout(() => {
+                        currentView.classList.remove('active');
+                        nextView.classList.add('active');
+                        nextView.classList.add('view-in');
+                    }, 300);
+                    setTimeout(() => {
+                        currentView.classList.remove('view-out');
+                        nextView.classList.remove('view-in');
+                        app.state.isAnimating = false;
+                    }, 600);
+                },
+                _playRoundChangeAnimation(roundChangeCallback, finalCallback, isTransitioningToRun) {
+                    if (app.state.isAnimating) return;
+                    app.state.isAnimating = true;
+                    const pomodoroProgress = app.dom.progress.pomodoro;
+                    const circumference = pomodoroProgress.dataset.circumference;
+                    pomodoroProgress.style.transition = 'stroke 0.5s ease-in-out, stroke-dashoffset 0.5s ease-in-out';
+                    app.dom.body.classList.add('is-round-changing-pre');
+                    app.updateThemeAndTitleBar();
+                    pomodoroProgress.style.strokeDashoffset = circumference;
+                    setTimeout(() => {
+                        pomodoroProgress.style.transition = 'none';
+                        app.dom.roundSound.play().catch(e => {});
+                        app.dom.body.classList.add('is-round-changing');
+                    }, 500);
+                    setTimeout(() => {
+                        roundChangeCallback();
+                    }, 2000);
+                    setTimeout(() => {
+                        app.dom.body.classList.remove('is-round-changing');
+                        pomodoroProgress.style.transition = 'stroke 0.5s ease-in-out, stroke-dashoffset 0.5s ease-in-out';
+                        if (isTransitioningToRun) {
+                            app.dom.body.classList.add('is-round-changing-post');
+                            app.updateThemeAndTitleBar();
+                        }
+                    }, 3500);
+                    setTimeout(() => {
+                        app.dom.body.classList.remove('is-round-changing-pre');
+                        app.dom.body.classList.remove('is-round-changing-post');
+                        pomodoroProgress.style.transition = 'stroke-dashoffset 1s linear, stroke 0.5s ease-in-out';
+                        app.state.isAnimating = false;
+                        finalCallback();
+                    }, 4000);
+                },
+                addTime(s) {
+                    let t = app.state.timer;
+                    t.seconds += s;
+                    if (!t.isRunning) { t.totalSeconds = t.seconds; }
+                    else { t.totalSeconds += s; }
+                    app.updateUI();
+                },
+                toggleTimer() {
+                    let t = app.state.timer;
+                    if (t.seconds <= 0 && !t.isRunning) return;
+                    if (!t.isRunning && t.totalSeconds <= 0) { t.totalSeconds = t.seconds; }
+                    t.isRunning = !t.isRunning;
+                    if (t.isRunning) {
+                        t.interval = setInterval(() => {
+                            t.seconds--;
+                            if (t.seconds < 0) {
+                                app.dom.tickSound.play().catch(e => {});
+                                t.seconds = 0;
+                                clearInterval(t.interval);
+                                t.isRunning = false;
+                                t.totalSeconds = 0;
+                            }
+                            app.updateUI();
+                        }, 1000);
+                    } else { clearInterval(t.interval); }
+                    app.updateUI();
+                },
+                resetTimer() {
+                    let t = app.state.timer;
+                    clearInterval(t.interval);
+                    t.isRunning = false;
+                    t.seconds = 0;
+                    t.totalSeconds = 0;
+                    app.updateUI();
+                },
+                toggleStopwatch() {
+                    let s = app.state.stopwatch;
+                    s.isRunning = !s.isRunning;
+                    if (s.isRunning) {
+                        s.interval = setInterval(() => {
+                            s.centiseconds++;
+                            app.updateUI();
+                        }, 10);
+                    } else { clearInterval(s.interval); }
+                    app.updateUI();
+                },
+                resetStopwatch() {
+                    let s = app.state.stopwatch;
+                    clearInterval(s.interval);
+                    s.isRunning = false;
+                    s.centiseconds = 0;
+                    app.updateUI();
+                },
+                togglePomodoro() {
+                    let p = app.state.pomodoro;
+                    p.isRunning = !p.isRunning;
+                    if (p.isRunning) {
+                        p.interval = setInterval(() => {
+                            p.seconds--;
+                            if (p.state === 'break' && p.seconds > 0 && p.seconds % 60 === 0) {
+                                app.dom.tickSound.play().catch(e => {});
+                            }
+                            if (p.seconds < 0) {
+                                app.actions.nextPomodoroState();
+                            } else {
+                                app.updateUI();
+                            }
+                        }, 1000);
+                    } else { clearInterval(p.interval); }
+                    app.updateUI();
+                },
+                resetPomodoro() {
+                    let p = app.state.pomodoro;
+                    p.seconds = p.totalSeconds;
+                    if (!p.isRunning) {
+                        app.updateUI();
+                    }
+                },
+                fullResetPomodoro() {
+                    let p = app.state.pomodoro;
+                    clearInterval(p.interval);
+                    p.isRunning = false;
+                    p.state = 'focus';
+                    p.round = 1;
+                    p.seconds = 1500;
+                    p.totalSeconds = 1500;
+                    app.updateUI();
+                },
+                changePomodoroRound(direction) {
+                    if (app.state.isAnimating) return;
+                    app.actions._playRoundChangeAnimation(
+                        () => {
+                            app.state.pomodoro.round = Math.max(1, app.state.pomodoro.round + direction);
+                            app.dom.pomodoroRound.textContent = `Round ${app.state.pomodoro.round}`;
+                        },
+                        () => {
+                            app.updateUI();
+                        },
+                        false
+                    );
+                },
+                nextPomodoroState() {
+                    let p = app.state.pomodoro;
+                    clearInterval(p.interval);
+                    p.isRunning = false;
+                    if (p.state === 'break') {
+                        app.actions._playRoundChangeAnimation(
+                            () => {
+                                p.round++;
+                                app.dom.pomodoroRound.textContent = `Round ${p.round}`;
+                            },
+                            () => {
+                                p.state = 'focus';
+                                p.seconds = 1500;
+                                p.totalSeconds = 1500;
+                                app.actions.togglePomodoro();
+                            },
+                            true
+                        );
+                    } else {
+                        p.state = 'break';
+                        p.seconds = 300;
+                        p.totalSeconds = 300;
+                        app.actions.togglePomodoro();
+                    }
+                },
+                toggleFullscreen() {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen();
+                    } else if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            }
+        };
+
+        app.init();
+    </script>
+</body>
+
+</html>
